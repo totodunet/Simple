@@ -156,3 +156,10 @@ Mais voilà on s'en fiche un peu...
 |10     10      20      30      40      50      60      70      80      90      100     |
 -----------------------------------------------------------------------------------------
 ```
+
+If you're interested, thanks to fork me or/and contribute to the development of Simple!
+
+published under the GNU General Public License v3 (https://www.gnu.org/licenses/gpl-3.0.html)
+
+Totodunet,
+http://totodu.net/
