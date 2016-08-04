@@ -265,11 +265,15 @@ void genere_code(GNode* ast){
 				fprintf(fichier,"\t}\n");
 				break;
 			case BOUCLE_FOR:
-				fprintf(fichier,"\tint i%i;\n\tfor(i%i=0;i%i<",nb_boucle,nb_boucle,nb_boucle);
+				fprintf(fichier,"\tint i%i;\n\tfor(i%i=",nb_boucle,nb_boucle);
 				genere_code(g_node_nth_child(ast,0));
-				fprintf(fichier,";i%i++){\n",nb_boucle);
-				nb_boucle++;
+				fprintf(fichier,";i%i<",nb_boucle);
+				genere_code(g_node_nth_child(ast,2));
+				fprintf(fichier,";i%i+=",nb_boucle);
 				genere_code(g_node_nth_child(ast,1));
+				fprintf(fichier,"){\n");
+				nb_boucle++;
+				genere_code(g_node_nth_child(ast,3));
 				fprintf(fichier,"\t}\n");
 				break;
 			case BOUCLE_WHILE:
@@ -297,19 +301,37 @@ void genere_code(GNode* ast){
 			case TEXTE:
 				fprintf(fichier,"%s",(char*)g_node_nth_child(ast,0)->data);
 				break;
-			case AFFECTATIONT:
+			case AFFECTATIONNT:
 				fprintf(fichier,"\tchar* ");
 				genere_code(g_node_nth_child(ast,0));
-				fprintf(fichier,"=malloc(sizeof(char)*strlen(");
+				fprintf(fichier,"=malloc(sizeof(char)*(strlen(");
 				genere_code(g_node_nth_child(ast,1));
-				fprintf(fichier,"));\n");
+				fprintf(fichier,")+1));\n");
 				fprintf(fichier,"\tif(");
 				genere_code(g_node_nth_child(ast,0));
 				fprintf(fichier,"==NULL){\n");
 				fprintf(fichier,"\tprintf(\"Erreur d'allocation memoire sur la variable ");
 				genere_code(g_node_nth_child(ast,0));
-				fprintf(fichier," !\");\n\texit(-1);\n}\n\t");
-				fprintf(fichier,"strcpy(");
+				fprintf(fichier," !\");\n\texit(-1);\n\t}\n\tstrcpy(");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,",");
+				genere_code(g_node_nth_child(ast,1));
+				fprintf(fichier,");\n");
+				break;
+			case AFFECTATIONT:
+				fprintf(fichier,"\t");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,"=realloc(");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,",sizeof(char)*(strlen(");
+				genere_code(g_node_nth_child(ast,1));
+				fprintf(fichier,")+1));\n");
+				fprintf(fichier,"\tif(");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,"==NULL){\n");
+				fprintf(fichier,"\tprintf(\"Erreur de reallocation memoire sur la variable ");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier," !\");\n\texit(-1);\n\t}\n\tstrcpy(");
 				genere_code(g_node_nth_child(ast,0));
 				fprintf(fichier,",");
 				genere_code(g_node_nth_child(ast,1));
@@ -318,6 +340,24 @@ void genere_code(GNode* ast){
 			case SUPPRESSIONT:
 				fprintf(fichier,"\tfree(");
 				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,");\n");
+				break;
+			case AFFECTATIONT_CONCAT:
+				fprintf(fichier,"\tif((");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,"=realloc(");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,",sizeof(char)*(strlen(");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,")+strlen(");
+				genere_code(g_node_nth_child(ast,1));
+				fprintf(fichier,")+1)))==NULL){\n");
+				fprintf(fichier,"\tprintf(\"Erreur de reallocation memoire sur la variable ");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier," !\");\n\texit(-1);\n\t}\n\tstrcat(");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,",");
+				genere_code(g_node_nth_child(ast,1));
 				fprintf(fichier,");\n");
 				break;
 		}
