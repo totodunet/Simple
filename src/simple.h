@@ -71,7 +71,9 @@ extern void fin_code(void);
 #define BOUCLE_FOR          47
 #define BOUCLE_WHILE        48
 #define BOUCLE_DO_WHILE     49
-#define AFFECTATIONT        50
-#define SUPPRESSIONT        51
-#define TEXTE               52
-#define AFFICHAGET          53
+#define AFFECTATIONNT       50
+#define AFFECTATIONT        51
+#define SUPPRESSIONT        52
+#define TEXTE               53
+#define AFFICHAGET          54
+#define AFFECTATIONT_CONCAT 55
