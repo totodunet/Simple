@@ -219,8 +219,29 @@ condition_sinon:   TOK_SINON bloc_code{
 
 boucle_for:		TOK_PARG expression_arithmetique TOK_PARD TOK_CROIX bloc_code TOK_FINSTR{
 					$$=g_node_new((gpointer)BOUCLE_FOR);
-					g_node_append($$,$2);
+					g_node_append($$,g_node_new((gpointer)ENTIER));
+					g_node_append_data(g_node_nth_child($$,0),strdup("0"));
+					g_node_append($$,g_node_new((gpointer)ENTIER));
+					g_node_append_data(g_node_nth_child($$,1),strdup("1"));
+                    g_node_append($$,$2);
                     g_node_append($$,$5);
+				}
+				|
+				TOK_PARG expression_arithmetique TOK_DOUBLE_POINT expression_arithmetique TOK_PARD bloc_code TOK_FINSTR{
+					$$=g_node_new((gpointer)BOUCLE_FOR);
+					g_node_append($$,$2);
+					g_node_append($$,g_node_new((gpointer)ENTIER));
+					g_node_append_data(g_node_nth_child($$,1),strdup("1"));
+                    g_node_append($$,$4);
+                    g_node_append($$,$6);
+				}
+				|
+				TOK_PARG expression_arithmetique TOK_DOUBLE_POINT expression_arithmetique TOK_DOUBLE_POINT expression_arithmetique TOK_PARD bloc_code TOK_FINSTR{
+					$$=g_node_new((gpointer)BOUCLE_FOR);
+					g_node_append($$,$2);
+                    g_node_append($$,$4);
+                    g_node_append($$,$6);
+                    g_node_append($$,$8);
 				};
 
 boucle_while:	TOK_PARG expression_booleenne TOK_PARD TOK_POINT_INTERROGATION bloc_code TOK_FINSTR{
@@ -416,6 +437,18 @@ affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR
 				}
 			}else{
 				$$=g_node_new((gpointer)AFFECTATION);
+				g_node_append($$,$1);
+				g_node_append($$,$3);
+			}
+		}
+		|
+		variable_texte TOK_AFFECT_PLUS expression_texte TOK_FINSTR{
+			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
+			if(var==NULL){
+				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
+				error_semantical=true;
+			}else{
+				$$=g_node_new((gpointer)AFFECTATIONT_CONCAT);
 				g_node_append($$,$1);
 				g_node_append($$,$3);
 			}
