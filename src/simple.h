@@ -77,3 +77,6 @@ extern void fin_code(void);
 #define TEXTE               53
 #define AFFICHAGET          54
 #define AFFECTATIONT_CONCAT 55
+#define DECIMAL             56
+#define AFFECTATIOND        57
+#define AFFICHAGED          58
