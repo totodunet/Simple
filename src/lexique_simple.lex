@@ -11,9 +11,11 @@ void* concat(char*,char*);
 
 %option noyywrap
 
-nombre 0|[1-9][[:digit:]]*
+entier 0|[1-9][[:digit:]]*
+decimal {entier}\.{entier}
 variable_booleenne b(_|[[:alnum:]])*
-variable_arithmetique e(_|[[:alnum:]])*
+variable_entiere e(_|[[:alnum:]])*
+variable_decimale d(_|[[:alnum:]])*
 variable_texte t(_|[[:alnum:]])*
 
 /* regex de commentaire d'une seule ligne */
@@ -120,10 +122,15 @@ commentaire ((\/\/|#).*)
                         exit(-1);
                 }
             }
+            
+{decimal} {
+    sscanf(yytext, "%lf", &yylval.decimal);
+    return TOK_DECIMAL;
+}
 
-{nombre} {
-    sscanf(yytext, "%ld", &yylval.nombre);
-    return TOK_NOMBRE;
+{entier} {
+    sscanf(yytext, "%ld", &yylval.entier);
+    return TOK_ENTIER;
 }
 
 "si"    {return TOK_SI;}
@@ -218,9 +225,14 @@ commentaire ((\/\/|#).*)
 }
 
 
-{variable_arithmetique} {
+{variable_entiere} {
     yylval.texte = yytext;
     return TOK_VARE;
+}
+
+{variable_decimale} {
+    yylval.texte = yytext;
+    return TOK_VARD;
 }
 
 {variable_texte} {
