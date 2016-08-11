@@ -9,6 +9,9 @@ GHashTable* table_variable;
 /* Fonction de suppression des variables declarees a l'interieur d'un arbre syntaxique */
 void supprime_variable(GNode*);
 
+/* Fonction permettant de dire si un noeud d'arbre contient un decimal ou non */
+bool decimal(GNode*);
+
 /* Notre structure Variable qui a comme membre le type et un pointeur generique vers la valeur */
 typedef struct Variable Variable;
 
@@ -22,7 +25,8 @@ struct Variable{
 /* L'union dans Bison est utilisee pour typer nos tokens ainsi que nos non terminaux. Ici nous avons declare une union avec trois types : nombre de type int, texte de type pointeur de char (char*) et noeud d'arbre syntaxique (AST) de type (GNode*) */
 
 %union {
-	int nombre;
+	long entier;
+	double decimal;
 	char* texte;
 	GNode*	noeud;
 }
@@ -49,7 +53,8 @@ struct Variable{
 %type<noeud>        boucle_for
 %type<noeud>        boucle_while
 %type<noeud>        boucle_do_while
-%type<noeud>		variable_arithmetique
+%type<noeud>		variable_entiere
+%type<noeud>		variable_decimale
 %type<noeud>		variable_booleenne
 %type<noeud>		variable_texte
 %type<noeud>		affectation
@@ -66,7 +71,8 @@ struct Variable{
 
 /* Nous avons la liste de nos tokens (les terminaux de notre grammaire) */
 
-%token<nombre>          TOK_NOMBRE
+%token<entier>          TOK_ENTIER
+%token<decimal>       	TOK_DECIMAL
 %token                  TOK_VRAI        /* true */
 %token                  TOK_FAUX        /* false */
 %token                  TOK_AFFECT      /* = */
@@ -75,7 +81,8 @@ struct Variable{
 %token                  TOK_CROG    TOK_CROD    /* [] */
 %token                  TOK_AFFICHER    /* afficher */
 %token<texte>           TOK_VARB        /* variable booleenne */
-%token<texte>           TOK_VARE        /* variable arithmetique */
+%token<texte>           TOK_VARE        /* variable entiere */
+%token<texte>           TOK_VARD        /* variable decimale */
 %token<texte>			TOK_VART
 %token                  TOK_SI          /* si */
 %token                  TOK_ALORS       /* alors */
@@ -164,8 +171,14 @@ instruction:	affectation{
 			$$=$1;
 		};
 
-variable_arithmetique:	TOK_VARE{
+variable_entiere:	TOK_VARE{
 				printf("\t\t\tVariable entiere %s\n",$1);
+				$$=g_node_new((gpointer)VARIABLE);
+				g_node_append_data($$,strdup($1));
+			};
+			
+variable_decimale:	TOK_VARD{
+				printf("\t\t\tVariable decimale %s\n",$1);
 				$$=g_node_new((gpointer)VARIABLE);
 				g_node_append_data($$,strdup($1));
 			};
@@ -256,7 +269,7 @@ boucle_do_while:	TOK_FAIRE bloc_code TOK_POINT_INTERROGATION TOK_PARG expression
 	                    g_node_append($$,$5);
 					};
 
-affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR{
+affectation:	variable_entiere TOK_AFFECT expression_arithmetique TOK_FINSTR{
 			/* $1 est la valeur du premier non terminal. Ici c'est la valeur du non terminal variable. $3 est la valeur du 2nd non terminal. */
 			printf("\t\tAffectation sur la variable\n");
 			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
@@ -286,7 +299,7 @@ affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR
 			}
 		}
 		|
-		variable_arithmetique TOK_AFFECT_PLUS expression_arithmetique TOK_FINSTR{
+		variable_entiere TOK_AFFECT_PLUS expression_arithmetique TOK_FINSTR{
 			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
 			if(var==NULL){
 				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
@@ -298,7 +311,7 @@ affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR
 			}
 		}
 		|
-		variable_arithmetique TOK_AFFECT_MOINS expression_arithmetique TOK_FINSTR{
+		variable_entiere TOK_AFFECT_MOINS expression_arithmetique TOK_FINSTR{
 			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
 			if(var==NULL){
 				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
@@ -310,7 +323,7 @@ affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR
 			}
 		}
 		|
-		variable_arithmetique TOK_AFFECT_MUL expression_arithmetique TOK_FINSTR{
+		variable_entiere TOK_AFFECT_MUL expression_arithmetique TOK_FINSTR{
 			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
 			if(var==NULL){
 				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
@@ -322,7 +335,7 @@ affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR
 			}
 		}
 		|
-		variable_arithmetique TOK_AFFECT_DIV expression_arithmetique TOK_FINSTR{
+		variable_entiere TOK_AFFECT_DIV expression_arithmetique TOK_FINSTR{
 			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
 			if(var==NULL){
 				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
@@ -334,7 +347,7 @@ affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR
 			}
 		}
 		|
-		variable_arithmetique TOK_AFFECT_MOD expression_arithmetique TOK_FINSTR{
+		variable_entiere TOK_AFFECT_MOD expression_arithmetique TOK_FINSTR{
 			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
 			if(var==NULL){
 				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
@@ -346,13 +359,115 @@ affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR
 			}
 		}
 		|
-		variable_arithmetique TOK_INCREMENTATION TOK_FINSTR{
+		variable_entiere TOK_INCREMENTATION TOK_FINSTR{
 			printf("\t\t\tIncrementation de +1 sur la variable\n");
 		    $$=g_node_new((gpointer)AFFECTATION_INCR);
 		    g_node_append($$,$1);
 		}
 		|
-		variable_arithmetique TOK_DECREMENTATION TOK_FINSTR{
+		variable_entiere TOK_DECREMENTATION TOK_FINSTR{
+			printf("\t\t\tDecrementation de -1 sur la variable\n");
+		    $$=g_node_new((gpointer)AFFECTATION_DECR);
+		    g_node_append($$,$1);
+		}
+		|
+		variable_decimale TOK_AFFECT expression_arithmetique TOK_FINSTR{
+			/* $1 est la valeur du premier non terminal. Ici c'est la valeur du non terminal variable. $3 est la valeur du 2nd non terminal. */
+			printf("\t\tAffectation sur la variable\n");
+			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
+			if(var==NULL){
+				/* On cree une Variable et on lui affecte le type que nous connaissons et la valeur */
+				var=malloc(sizeof(Variable));
+				if(var!=NULL){
+					var->type=strdup("decimal");
+					var->value=$3;
+					/* On l'insere dans la table de hachage (cle: <nom_variable> / valeur: <(type,valeur)>) */
+					if(g_hash_table_insert(table_variable,g_node_nth_child($1,0)->data,var)){
+    					$$=g_node_new((gpointer)AFFECTATIOND);
+    					g_node_append($$,$1);
+    					g_node_append($$,$3);
+					}else{
+					    fprintf(stderr,"ERREUR - PROBLEME CREATION VARIABLE !\n");
+					    exit(-1); 
+					}
+				}else{
+					fprintf(stderr,"ERREUR - PROBLEME ALLOCATION MEMOIRE VARIABLE !\n");
+					exit(-1);
+				}
+			}else{
+				$$=g_node_new((gpointer)AFFECTATION);
+				g_node_append($$,$1);
+				g_node_append($$,$3);
+			}
+		}
+		|
+		variable_decimale TOK_AFFECT_PLUS expression_arithmetique TOK_FINSTR{
+			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
+			if(var==NULL){
+				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
+				error_semantical=true;
+			}else{
+				$$=g_node_new((gpointer)AFFECTATION_PLUS);
+				g_node_append($$,$1);
+				g_node_append($$,$3);
+			}
+		}
+		|
+		variable_decimale TOK_AFFECT_MOINS expression_arithmetique TOK_FINSTR{
+			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
+			if(var==NULL){
+				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
+				error_semantical=true;
+			}else{
+				$$=g_node_new((gpointer)AFFECTATION_MOINS);
+				g_node_append($$,$1);
+				g_node_append($$,$3);
+			}
+		}
+		|
+		variable_decimale TOK_AFFECT_MUL expression_arithmetique TOK_FINSTR{
+			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
+			if(var==NULL){
+				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
+				error_semantical=true;
+			}else{
+				$$=g_node_new((gpointer)AFFECTATION_MUL);
+				g_node_append($$,$1);
+				g_node_append($$,$3);
+			}
+		}
+		|
+		variable_decimale TOK_AFFECT_DIV expression_arithmetique TOK_FINSTR{
+			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
+			if(var==NULL){
+				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
+				error_semantical=true;
+			}else{
+				$$=g_node_new((gpointer)AFFECTATION_DIV);
+				g_node_append($$,$1);
+				g_node_append($$,$3);
+			}
+		}
+		|
+		variable_decimale TOK_AFFECT_MOD expression_arithmetique TOK_FINSTR{
+			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
+			if(var==NULL){
+				fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
+				error_semantical=true;
+			}else{
+				$$=g_node_new((gpointer)AFFECTATION_MOD);
+				g_node_append($$,$1);
+				g_node_append($$,$3);
+			}
+		}
+		|
+		variable_decimale TOK_INCREMENTATION TOK_FINSTR{
+			printf("\t\t\tIncrementation de +1 sur la variable\n");
+		    $$=g_node_new((gpointer)AFFECTATION_INCR);
+		    g_node_append($$,$1);
+		}
+		|
+		variable_decimale TOK_DECREMENTATION TOK_FINSTR{
 			printf("\t\t\tDecrementation de -1 sur la variable\n");
 		    $$=g_node_new((gpointer)AFFECTATION_DECR);
 		    g_node_append($$,$1);
@@ -456,8 +571,13 @@ affectation:	variable_arithmetique TOK_AFFECT expression_arithmetique TOK_FINSTR
 
 affichage:	TOK_AFFICHER expression_arithmetique TOK_FINSTR{
 			printf("\t\tAffichage de la valeur de l'expression arithmetique\n");
-			$$=g_node_new((gpointer)AFFICHAGEE);
-			g_node_append($$,$2);
+			if(decimal($2)){
+				$$=g_node_new((gpointer)AFFICHAGED);
+				g_node_append($$,$2);
+			}else{
+				$$=g_node_new((gpointer)AFFICHAGEE);
+				g_node_append($$,$2);
+			}
 		}
 		|
 		TOK_AFFICHER expression_booleenne TOK_FINSTR{
@@ -501,27 +621,57 @@ suppression:	TOK_SUPPR variable_texte TOK_FINSTR{
 					}
 				}
 
-expression_arithmetique:	TOK_NOMBRE{
-					printf("\t\t\tNombre : %i\n",$1);
+expression_arithmetique:	TOK_ENTIER{
+					printf("\t\t\tNombre entier : %ld\n",$1);
 					/* Comme le token TOK_NOMBRE est de type entier et que on a type expression_arithmetique comme du texte, il nous faut convertir la valeur en texte. */
-					int length=snprintf(NULL,0,"%d",$1);
+					int length=snprintf(NULL,0,"%ld",$1);
 					char* str=malloc(length+1);
-					snprintf(str,length+1,"%d",$1);
+					snprintf(str,length+1,"%ld",$1);
 					$$=g_node_new((gpointer)ENTIER);
 					g_node_append_data($$,strdup(str));
 					free(str);
 				}
 				|
-				variable_arithmetique{
+				TOK_DECIMAL{
+					printf("\t\t\tNombre decimal : %f\n",$1);
+					/* Comme le token TOK_NOMBRE est de type entier et que on a type expression_arithmetique comme du texte, il nous faut convertir la valeur en texte. */
+					int length=snprintf(NULL,0,"%f",$1);
+					char* str=malloc(length+1);
+					snprintf(str,length+1,"%f",$1);
+					$$=g_node_new((gpointer)DECIMAL);
+					g_node_append_data($$,strdup(str));
+					free(str);
+				}
+				|
+				variable_entiere{
 					/* On recupere un pointeur vers la structure Variable */
 					Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
 					/* Si on a trouve un pointeur valable */
 					if(var!=NULL){
-						/* On verifie que le type est bien un entier - Inutile car impose a l'analyse syntaxique */
+						/* On verifie que le type est bien un entier ou un decimal - Inutile car impose a l'analyse syntaxique */
 						if(strcmp(var->type,"entier")==0){
 							$$=$1;
 						}else{
 							fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Type incompatible (entier attendu - valeur : %s) !\n",lineno,(char*)g_node_nth_child($1,0)->data);
+							error_semantical=true;
+						}
+					/* Sinon on conclue que la variable n'a jamais ete declaree car absente de la table */
+					}else{
+						fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Variable %s jamais declaree !\n",lineno,(char*)g_node_nth_child($1,0)->data);
+						error_semantical=true;
+					}
+				}
+				|
+				variable_decimale{
+					/* On recupere un pointeur vers la structure Variable */
+					Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($1,0)->data);
+					/* Si on a trouve un pointeur valable */
+					if(var!=NULL){
+						/* On verifie que le type est bien un entier ou un decimal - Inutile car impose a l'analyse syntaxique */
+						if(strcmp(var->type,"decimal")==0){
+							$$=$1;
+						}else{
+							fprintf(stderr,"\tERREUR : Erreur de semantique a la ligne %d. Type incompatible (decimal attendu - valeur : %s) !\n",lineno,(char*)g_node_nth_child($1,0)->data);
 							error_semantical=true;
 						}
 					/* Sinon on conclue que la variable n'a jamais ete declaree car absente de la table */
@@ -574,7 +724,7 @@ expression_arithmetique:	TOK_NOMBRE{
 				}
 				|
 				TOK_PARG expression_arithmetique TOK_PARD{
-					printf("\t\t\tC'est une expression artihmetique entre parentheses\n");
+					printf("\t\t\tC'est une expression arithmetique entre parentheses\n");
 					$$=g_node_new((gpointer)EXPR_PAR);
 					g_node_append($$,$2);
 				};
@@ -851,10 +1001,10 @@ void yyerror(char *s) {
 /* Cette fonction supprime dans la table de hachage toutes les variables declarees pour la premiere fois dans l'arbre syntaxique donne en parametre */
 
 void supprime_variable(GNode* ast){
-    /* si l'element est n'est pas NULL et que ce n'est pas une feuille et que ce n'est pas un type bloc code (pour eviter de supprimer une variable deja suprimee) */
+    /* si l'element n'est pas NULL et que ce n'est pas une feuille et que ce n'est pas un type bloc code (pour eviter de supprimer une variable deja suprimee) */
     if(ast&&!G_NODE_IS_LEAF(ast)&&(long)ast->data!=BLOC_CODE){
         /* si le noeud est de type declaration */
-        if((long)ast->data==AFFECTATIONB||(long)ast->data==AFFECTATIONE|(long)ast->data==AFFECTATIONT){
+        if((long)ast->data==AFFECTATIONB||(long)ast->data==AFFECTATIONE|(long)ast->data==AFFECTATIONT|(long)ast->data==AFFECTATIOND){
             /* suppression de la variable dans la table de hachage */
             if(g_hash_table_remove(table_variable,(char*)g_node_nth_child(g_node_nth_child(ast,0),0)->data)){
                 printf("Variable supprimee !\n");
@@ -870,4 +1020,34 @@ void supprime_variable(GNode* ast){
             }
         }
     }
+}
+
+/* Cette fonction dit si un arbre contient un decimal */
+
+bool decimal(GNode* ast){
+    /* si l'element n'est pas NULL et que ce n'est pas une feuille et que ce n'est pas un type bloc code (pour eviter de supprimer une variable deja suprimee) */
+    bool nbdecimal=false;
+    if(ast&&!G_NODE_IS_LEAF(ast)){
+        /* si le noeud est de type decimal */
+        if((long)ast->data==DECIMAL){
+            nbdecimal=true;
+        /* si le noeud est une variable */
+        }else if((long)ast->data==VARIABLE){
+        	/* On recupere un pointeur vers la structure Variable */
+			Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child(ast,0)->data);
+			/* Si on a trouve un pointeur valable */
+			if(var!=NULL){
+				/* On regarde si le type de la variable est un decimal */
+				if(strcmp(var->type,"decimal")==0)
+					nbdecimal=true;	
+			}
+        /* sinon on continue de parcourir l'arbre */
+        }else{
+            int nb_enfant;
+            for(nb_enfant=0;nb_enfant<=g_node_n_children(ast);nb_enfant++){
+                nbdecimal|=decimal(g_node_nth_child(ast,nb_enfant));
+            }
+        }
+    }
+    return nbdecimal;
 }
