@@ -24,7 +24,7 @@ void genere_code(GNode* ast){
 				fprintf(fichier,"%s",(char*)g_node_nth_child(ast,0)->data);
 				break;
 			case AFFECTATIONE:
-				fprintf(fichier,"\tint ");
+				fprintf(fichier,"\tlong ");
 				genere_code(g_node_nth_child(ast,0));
 				fprintf(fichier,"=");
 				genere_code(g_node_nth_child(ast,1));
@@ -104,7 +104,7 @@ void genere_code(GNode* ast){
 				fprintf(fichier,"--;\n");
 				break;
 			case AFFICHAGEE:
-				fprintf(fichier,"\tprintf(\"%%d\",");
+				fprintf(fichier,"\tprintf(\"%%ld\",");
 				genere_code(g_node_nth_child(ast,0));
 				fprintf(fichier,");\n");
 				break;
@@ -358,6 +358,21 @@ void genere_code(GNode* ast){
 				genere_code(g_node_nth_child(ast,0));
 				fprintf(fichier,",");
 				genere_code(g_node_nth_child(ast,1));
+				fprintf(fichier,");\n");
+				break;
+			case DECIMAL:
+				fprintf(fichier,"%s",(char*)g_node_nth_child(ast,0)->data);
+				break;
+			case AFFECTATIOND:
+				fprintf(fichier,"\tdouble ");
+				genere_code(g_node_nth_child(ast,0));
+				fprintf(fichier,"=");
+				genere_code(g_node_nth_child(ast,1));
+				fprintf(fichier,";\n");
+				break;
+			case AFFICHAGED:
+				fprintf(fichier,"\tprintf(\"%%f\",");
+				genere_code(g_node_nth_child(ast,0));
 				fprintf(fichier,");\n");
 				break;
 		}
