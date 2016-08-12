@@ -68,6 +68,7 @@ struct Variable{
 %type<noeud>		multiplication
 %type<noeud>		division
 %type<noeud>		modulo
+%type<noeud>		saisie
 
 /* Nous avons la liste de nos tokens (les terminaux de notre grammaire) */
 
@@ -96,6 +97,7 @@ struct Variable{
 %token					TOK_CROIX		/* x */
 %token<texte>			TOK_TEXTE		/* texte libre */
 %token					TOK_SUPPR		/* supprimer */
+%token					TOK_SAISIR		/* saisir */
 
 %%
 
@@ -168,6 +170,11 @@ instruction:	affectation{
 		|
 		suppression{
 			printf("\tInstruction type Suppression\n");
+			$$=$1;
+		}
+		|
+		saisie{
+			printf("\tInstruction type Saisie\n");
 			$$=$1;
 		};
 
@@ -568,6 +575,110 @@ affectation:	variable_entiere TOK_AFFECT expression_arithmetique TOK_FINSTR{
 				g_node_append($$,$3);
 			}
 		};
+		
+saisie:		TOK_SAISIR variable_texte TOK_FINSTR{
+				Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($2,0)->data);
+				if(var==NULL){
+						/* On cree une Variable et on lui affecte le type que nous connaissons et la valeur */
+				var=malloc(sizeof(Variable));
+				if(var!=NULL){
+					var->type=strdup("texte");
+					var->value=NULL;
+					/* On l'insere dans la table de hachage (cle: <nom_variable> / valeur: <(type,valeur)>) */
+					if(g_hash_table_insert(table_variable,g_node_nth_child($2,0)->data,var)){
+    					$$=g_node_new((gpointer)SAISIENT);
+    					g_node_append($$,$2);
+					}else{
+					    fprintf(stderr,"ERREUR - PROBLEME CREATION VARIABLE !\n");
+					    exit(-1); 
+					}
+				}else{
+					fprintf(stderr,"ERREUR - PROBLEME ALLOCATION MEMOIRE VARIABLE !\n");
+					exit(-1);
+				}
+				}else{
+					$$=g_node_new((gpointer)SAISIET);
+					g_node_append($$,$2);
+				}
+			}
+			|
+			TOK_SAISIR variable_entiere TOK_FINSTR{
+				Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($2,0)->data);
+				if(var==NULL){
+						/* On cree une Variable et on lui affecte le type que nous connaissons et la valeur */
+				var=malloc(sizeof(Variable));
+				if(var!=NULL){
+					var->type=strdup("entier");
+					var->value=NULL;
+					/* On l'insere dans la table de hachage (cle: <nom_variable> / valeur: <(type,valeur)>) */
+					if(g_hash_table_insert(table_variable,g_node_nth_child($2,0)->data,var)){
+    					$$=g_node_new((gpointer)SAISIENE);
+    					g_node_append($$,$2);
+					}else{
+					    fprintf(stderr,"ERREUR - PROBLEME CREATION VARIABLE !\n");
+					    exit(-1); 
+					}
+				}else{
+					fprintf(stderr,"ERREUR - PROBLEME ALLOCATION MEMOIRE VARIABLE !\n");
+					exit(-1);
+				}
+				}else{
+					$$=g_node_new((gpointer)SAISIEE);
+					g_node_append($$,$2);
+				}
+			}
+			|
+			TOK_SAISIR variable_booleenne TOK_FINSTR{
+				Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($2,0)->data);
+				if(var==NULL){
+						/* On cree une Variable et on lui affecte le type que nous connaissons et la valeur */
+				var=malloc(sizeof(Variable));
+				if(var!=NULL){
+					var->type=strdup("booleen");
+					var->value=NULL;
+					/* On l'insere dans la table de hachage (cle: <nom_variable> / valeur: <(type,valeur)>) */
+					if(g_hash_table_insert(table_variable,g_node_nth_child($2,0)->data,var)){
+    					$$=g_node_new((gpointer)SAISIENB);
+    					g_node_append($$,$2);
+					}else{
+					    fprintf(stderr,"ERREUR - PROBLEME CREATION VARIABLE !\n");
+					    exit(-1); 
+					}
+				}else{
+					fprintf(stderr,"ERREUR - PROBLEME ALLOCATION MEMOIRE VARIABLE !\n");
+					exit(-1);
+				}
+				}else{
+					$$=g_node_new((gpointer)SAISIEB);
+					g_node_append($$,$2);
+				}
+			}
+			|
+			TOK_SAISIR variable_decimale TOK_FINSTR{
+				Variable* var=g_hash_table_lookup(table_variable,(char*)g_node_nth_child($2,0)->data);
+				if(var==NULL){
+						/* On cree une Variable et on lui affecte le type que nous connaissons et la valeur */
+				var=malloc(sizeof(Variable));
+				if(var!=NULL){
+					var->type=strdup("decimal");
+					var->value=NULL;
+					/* On l'insere dans la table de hachage (cle: <nom_variable> / valeur: <(type,valeur)>) */
+					if(g_hash_table_insert(table_variable,g_node_nth_child($2,0)->data,var)){
+    					$$=g_node_new((gpointer)SAISIEND);
+    					g_node_append($$,$2);
+					}else{
+					    fprintf(stderr,"ERREUR - PROBLEME CREATION VARIABLE !\n");
+					    exit(-1); 
+					}
+				}else{
+					fprintf(stderr,"ERREUR - PROBLEME ALLOCATION MEMOIRE VARIABLE !\n");
+					exit(-1);
+				}
+				}else{
+					$$=g_node_new((gpointer)SAISIED);
+					g_node_append($$,$2);
+				}
+			};
 
 affichage:	TOK_AFFICHER expression_arithmetique TOK_FINSTR{
 			printf("\t\tAffichage de la valeur de l'expression arithmetique\n");
