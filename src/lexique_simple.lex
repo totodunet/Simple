@@ -177,6 +177,8 @@ commentaire ((\/\/|#).*)
 
 "faire"         {return TOK_FAIRE;}
 
+"saisir"        {return TOK_SAISIR;}
+
 "x"             {return TOK_CROIX;}
 
 "="             {return TOK_AFFECT;}
