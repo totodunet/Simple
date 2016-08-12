@@ -80,3 +80,11 @@ extern void fin_code(void);
 #define DECIMAL             56
 #define AFFECTATIOND        57
 #define AFFICHAGED          58
+#define SAISIEE             59
+#define SAISIEB             60
+#define SAISIED             61
+#define SAISIET             62
+#define SAISIENE            63
+#define SAISIENB            64
+#define SAISIEND            65
+#define SAISIENT            66
