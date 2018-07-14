@@ -1,10 +1,12 @@
 # Simple
 A compiler which converts Simple code (Simple is a pseudo-language) into C code.
 
-Simple is a pseudo-language with as main goal to be easy to use. It illustrates my tutorial (written in French language) about the compiling :
+Simple is an exotic language with as main goal to be easy to use. It illustrates my tutorial (written in French language) about the compiling :
 http://totodu.net/Compilation/
 
 Simple is developped with these tools : Flex (Fast lexical analyzer), Bison (Syntaxical analyzer) and GLib-2.0
+
+If you want to create programs with Simple and execute them, just clone the following IDE https://github.com/erwanaubry/IDE_simple - It embeds a compiler.
 
 To use the compiler and develop in Simple, we have to compile the compiler :
 
